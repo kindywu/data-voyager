@@ -25,3 +25,6 @@ chmod +x /usr/bin/duckdb
 - clickhouse
 select * from postgresql('localhost:5432', 'stats', 'user_stats', 'kindy', 'kindy')
 into outfile 'data/user_stats.parquet'
+
+select * from postgresql('localhost:5432', 'stats', 'user_stats', 'kindy', 'kindy') limit 100
+into outfile 'assets/user_stats.ndjson'
