@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
+arrow = "52.1.0"
+datafusion = "40.0.0"
+polars = { version = "0.41.3", features = ["lazy", "parquet", "sql"] }
+tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread", "rt"] }
