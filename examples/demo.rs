@@ -1,5 +1,10 @@
-use anyhow::Result;
+use std::time::Duration;
 
-fn main() -> Result<()> {
+use anyhow::Result;
+use tokio::time::sleep;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    sleep(Duration::from_secs(1)).await;
     Ok(())
 }
