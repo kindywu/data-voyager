@@ -25,9 +25,8 @@ pub fn describe(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
         .to_string();
 
     let cmd = DescribeOpts::new(name).into();
-    ctx.send(cmd);
 
-    Ok(None)
+    Ok(ctx.send(cmd))
 }
 
 impl CmdExector for DescribeOpts {

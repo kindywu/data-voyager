@@ -50,7 +50,7 @@ impl ReplContext {
                 let mut backend = DataFusionBackend::new();
                 while let Ok(msg) = rx.recv() {
                     if let Err(e) = rt.block_on(async {
-                        println!("!!! cmd: {:?}", msg.cmd);
+                        // println!("!!! cmd: {:?}", msg.cmd);
                         let content = msg.cmd.execute(&mut backend).await?;
                         msg.tx.send(content).unwrap();
                         Ok::<_, anyhow::Error>(())
@@ -67,15 +67,17 @@ impl ReplContext {
     pub fn send(&self, cmd: ReplCommand) -> Option<String> {
         let (tx, rx) = oneshot::channel();
         let msg = ReplMessage::new(cmd, tx);
+
         if let Err(e) = self.tx.send(msg) {
             eprintln!("Error: {}", e);
             std::process::exit(1);
         }
+
         match rx.recv() {
             Ok(data) => Some(data),
             Err(e) => {
                 eprintln!("Repl Recv Error: {}", e);
-                std::process::exit(1);
+                None
             }
         }
     }

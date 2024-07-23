@@ -20,14 +20,13 @@ impl SqlOpts {
 
 pub fn sql(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
     let name = args
-        .get_one::<String>("name")
-        .expect("expect name")
+        .get_one::<String>("sql")
+        .expect("expect sql")
         .to_string();
 
     let cmd = SqlOpts::new(name).into();
-    ctx.send(cmd);
 
-    Ok(None)
+    Ok(ctx.send(cmd))
 }
 
 impl CmdExector for SqlOpts {

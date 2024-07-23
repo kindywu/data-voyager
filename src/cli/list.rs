@@ -11,9 +11,7 @@ use super::ReplResult;
 pub struct ListOpts;
 
 pub fn list(_args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
-    ctx.send(ListOpts.into());
-
-    Ok(None)
+    Ok(ctx.send(ListOpts.into()))
 }
 
 impl CmdExector for ListOpts {

@@ -25,9 +25,8 @@ pub fn schema(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
         .to_string();
 
     let cmd = SchemaOpts::new(name).into();
-    ctx.send(cmd);
 
-    Ok(None)
+    Ok(ctx.send(cmd))
 }
 
 impl CmdExector for SchemaOpts {

@@ -41,9 +41,8 @@ pub fn connect(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
         .to_string();
 
     let cmd = ConnectOpts::new(conn, table, name).into();
-    ctx.send(cmd);
 
-    Ok(None)
+    Ok(ctx.send(cmd))
 }
 
 fn verify_conn_str(s: &str) -> Result<DatasetConn, String> {
@@ -64,6 +63,9 @@ fn verify_conn_str(s: &str) -> Result<DatasetConn, String> {
 impl CmdExector for ConnectOpts {
     async fn execute<T: Backend>(self, backend: &mut T) -> anyhow::Result<String> {
         backend.connect(&self).await?;
-        Ok(format!("Connected to dataset: {}", self.name))
+        Ok(format!(
+            "Connected to dataset: {} {:?}",
+            self.name, self.conn
+        ))
     }
 }

@@ -27,9 +27,8 @@ pub fn head(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
     let size = *args.get_one::<usize>("size").expect("expect size");
 
     let cmd = HeadOpts::new(name, size).into();
-    ctx.send(cmd);
 
-    Ok(None)
+    Ok(ctx.send(cmd))
 }
 
 impl CmdExector for HeadOpts {

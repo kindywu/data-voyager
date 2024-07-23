@@ -44,23 +44,28 @@ impl Backend for DataFusionBackend {
     }
 
     async fn list(&self) -> anyhow::Result<Self::DataFrame> {
-        todo!()
+        let sql = "select table_name, table_type from information_schema.tables where table_schema = 'public'";
+        let df = self.0.sql(sql).await?;
+        Ok(df)
     }
 
-    async fn schema(&self, _name: &str) -> anyhow::Result<Self::DataFrame> {
-        todo!()
+    async fn schema(&self, name: &str) -> anyhow::Result<Self::DataFrame> {
+        let df = self.0.sql(&format!("DESCRIBE {}", name)).await?;
+        Ok(df)
     }
 
     async fn describe(&self, _name: &str) -> anyhow::Result<Self::DataFrame> {
         todo!()
     }
 
-    async fn head(&self, _name: &str, _size: usize) -> anyhow::Result<Self::DataFrame> {
-        todo!()
+    async fn head(&self, name: &str, size: usize) -> anyhow::Result<Self::DataFrame> {
+        let sql = format!("SELECT * FROM {name} LIMIT {size}");
+        let df = self.0.sql(&sql).await?;
+        Ok(df)
     }
 
-    async fn sql(&self, _sql: &str) -> anyhow::Result<Self::DataFrame> {
-        todo!()
+    async fn sql(&self, sql: &str) -> anyhow::Result<Self::DataFrame> {
+        Ok(self.0.sql(sql).await?)
     }
 }
 
