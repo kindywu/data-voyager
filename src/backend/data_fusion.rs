@@ -1,5 +1,9 @@
+use std::ops::Deref;
+
 use arrow::util::pretty::pretty_format_batches;
 use datafusion::prelude::{SessionConfig, SessionContext};
+
+use crate::cli::DatasetConn;
 
 use super::{Backend, ReplDisplay};
 
@@ -18,8 +22,25 @@ impl DataFusionBackend {
 impl Backend for DataFusionBackend {
     type DataFrame = datafusion::dataframe::DataFrame;
 
-    async fn connect(&mut self, _opts: &crate::ConnectOpts) -> anyhow::Result<()> {
-        todo!()
+    async fn connect(&mut self, opts: &crate::ConnectOpts) -> anyhow::Result<()> {
+        match &opts.conn {
+            DatasetConn::Postgres(_conn_str) => {
+                println!("Postgres connection is not supported yet")
+            }
+            DatasetConn::Csv(filename) => {
+                self.register_csv(&opts.name, filename, Default::default())
+                    .await?;
+            }
+            DatasetConn::Parquet(filename) => {
+                self.register_parquet(&opts.name, filename, Default::default())
+                    .await?;
+            }
+            DatasetConn::NdJson(filename) => {
+                self.register_json(&opts.name, filename, Default::default())
+                    .await?;
+            }
+        }
+        Ok(())
     }
 
     async fn list(&self) -> anyhow::Result<Self::DataFrame> {
@@ -40,6 +61,14 @@ impl Backend for DataFusionBackend {
 
     async fn sql(&self, _sql: &str) -> anyhow::Result<Self::DataFrame> {
         todo!()
+    }
+}
+
+impl Deref for DataFusionBackend {
+    type Target = SessionContext;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

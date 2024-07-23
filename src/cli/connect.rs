@@ -10,17 +10,17 @@ pub enum DatasetConn {
     Postgres(String),
     Csv(String),
     Parquet(String),
-    Json(String),
+    NdJson(String),
 }
 
 #[derive(Debug, Parser)]
 pub struct ConnectOpts {
     #[arg(value_parser = verify_conn_str, help = "Connection string to the dataset, could be postgres of local file (support: csv, parquet, json)")]
-    conn: DatasetConn,
+    pub conn: DatasetConn,
     #[arg(short, long, help = "If database, the name of the table")]
-    table: Option<String>,
+    pub table: Option<String>,
     #[arg(short, long, help = "The name of the dataset")]
-    name: String,
+    pub name: String,
 }
 
 impl ConnectOpts {
@@ -55,7 +55,7 @@ fn verify_conn_str(s: &str) -> Result<DatasetConn, String> {
     } else if conn_str.ends_with(".parquet") {
         Ok(DatasetConn::Parquet(conn_str))
     } else if conn_str.ends_with(".json") {
-        Ok(DatasetConn::Json(conn_str))
+        Ok(DatasetConn::NdJson(conn_str))
     } else {
         Err(format!("Invalid connection string: {}", s))
     }

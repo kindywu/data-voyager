@@ -10,7 +10,7 @@ use enum_dispatch::enum_dispatch;
 use reedline_repl_rs::Result;
 
 pub use self::{
-    connect::{connect, ConnectOpts},
+    connect::{connect, ConnectOpts, DatasetConn},
     describe::{describe, DescribeOpts},
     head::{head, HeadOpts},
     list::{list, ListOpts},
