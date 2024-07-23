@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use arrow::util::pretty::pretty_format_batches;
-use datafusion::prelude::{SessionConfig, SessionContext};
+use datafusion::prelude::{NdJsonReadOptions, SessionConfig, SessionContext};
 
 use crate::cli::DatasetConn;
 
@@ -27,17 +27,20 @@ impl Backend for DataFusionBackend {
             DatasetConn::Postgres(_conn_str) => {
                 println!("Postgres connection is not supported yet")
             }
-            DatasetConn::Csv(filename) => {
+            DatasetConn::Csv(filename, _) => {
                 self.register_csv(&opts.name, filename, Default::default())
                     .await?;
             }
-            DatasetConn::Parquet(filename) => {
+            DatasetConn::Parquet(filename, _) => {
                 self.register_parquet(&opts.name, filename, Default::default())
                     .await?;
             }
-            DatasetConn::NdJson(filename) => {
-                self.register_json(&opts.name, filename, Default::default())
-                    .await?;
+            DatasetConn::NdJson(filename, suffix) => {
+                let options = NdJsonReadOptions {
+                    file_extension: suffix,
+                    ..Default::default()
+                };
+                self.register_json(&opts.name, filename, options).await?;
             }
         }
         Ok(())
@@ -54,8 +57,10 @@ impl Backend for DataFusionBackend {
         Ok(df)
     }
 
-    async fn describe(&self, _name: &str) -> anyhow::Result<Self::DataFrame> {
-        todo!()
+    async fn describe(&self, name: &str) -> anyhow::Result<Self::DataFrame> {
+        let sql = format!("SELECT * FROM {name}");
+        let df = self.0.sql(&sql).await?;
+        Ok(df.describe().await?)
     }
 
     async fn head(&self, name: &str, size: usize) -> anyhow::Result<Self::DataFrame> {

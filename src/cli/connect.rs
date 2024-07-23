@@ -8,9 +8,9 @@ use super::ReplResult;
 #[derive(Debug, Clone)]
 pub enum DatasetConn {
     Postgres(String),
-    Csv(String),
-    Parquet(String),
-    NdJson(String),
+    Csv(String, String),
+    Parquet(String, String),
+    NdJson(String, String),
 }
 
 #[derive(Debug, Parser)]
@@ -50,11 +50,11 @@ fn verify_conn_str(s: &str) -> Result<DatasetConn, String> {
     if conn_str.starts_with("postgres://") {
         Ok(DatasetConn::Postgres(conn_str))
     } else if conn_str.ends_with(".csv") {
-        Ok(DatasetConn::Csv(conn_str))
+        Ok(DatasetConn::Csv(conn_str, "csv".to_string()))
     } else if conn_str.ends_with(".parquet") {
-        Ok(DatasetConn::Parquet(conn_str))
-    } else if conn_str.ends_with(".json") {
-        Ok(DatasetConn::NdJson(conn_str))
+        Ok(DatasetConn::Parquet(conn_str, "parquet".to_string()))
+    } else if conn_str.ends_with(".ndjson") {
+        Ok(DatasetConn::NdJson(conn_str, "ndjson".to_string()))
     } else {
         Err(format!("Invalid connection string: {}", s))
     }
