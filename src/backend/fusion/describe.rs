@@ -26,7 +26,7 @@ use arrow::{
     datatypes::{DataType, Field, Schema},
 };
 
-async fn describe(df: DataFrame) -> Result<DataFrame> {
+pub async fn describe(df: DataFrame) -> Result<DataFrame> {
     let original_schema_fields = df.schema().fields().iter();
 
     let describe = Field::new("describe", DataType::Utf8, false);

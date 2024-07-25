@@ -8,9 +8,10 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.86"
 arrow = "52.1.0"
+chrono = { version = "0.4.38", features = ["serde"] }
 clap = { version = "4.5.9", features = ["derive"] }
 crossbeam-channel = "0.5.13"
-datafusion = "40.0.0"
+datafusion = { version = "40.0.0", features = ["serde"] }
 datafusion-expr = "40.0.0"
 dirs = "5.0.1"
 duckdb = { version = "1.0.0", features = ["bundled"] }
