@@ -7,6 +7,8 @@ use datafusion::prelude::{NdJsonReadOptions, SessionConfig, SessionContext};
 
 use crate::cli::DatasetConn;
 
+use describe::{cast_back, describe, transform};
+
 use super::{Backend, ReplDisplay};
 
 #[allow(unused)]
@@ -61,8 +63,13 @@ impl Backend for DataFusionBackend {
 
     async fn describe(&self, name: &str) -> anyhow::Result<Self::DataFrame> {
         let sql = format!("SELECT * FROM {name}");
-        let df = self.0.sql(&sql).await?;
-        Ok(describe::describe(df).await?)
+
+        let original = self.0.sql(&sql).await?;
+        let df = transform(original.clone())?;
+        let df = describe(df).await?;
+        let df = cast_back(df, original)?;
+
+        Ok(df)
     }
 
     async fn head(&self, name: &str, size: usize) -> anyhow::Result<Self::DataFrame> {

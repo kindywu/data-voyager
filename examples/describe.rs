@@ -149,14 +149,6 @@ fn aggregate_all_in_column(df: DataFrame, field: &Arc<Field>) -> Result<DataFram
     Ok(df)
 }
 
-async fn print_dataframe(df: DataFrame) -> Result<()> {
-    // print data
-    let batches = df.collect().await?;
-    let data = pretty_format_batches(&batches)?;
-    println!("{data}");
-    Ok(())
-}
-
 fn cast_back(df: DataFrame, original: DataFrame) -> anyhow::Result<DataFrame> {
     // we need the describe column
     let describe = Arc::new(Field::new("describe", DataType::Utf8, false));
@@ -179,4 +171,12 @@ fn cast_back(df: DataFrame, original: DataFrame) -> anyhow::Result<DataFrame> {
 
     Ok(df.select(expressions)?)
     // .sort(vec![col("describe").sort(true, false)])?)
+}
+
+async fn print_dataframe(df: DataFrame) -> Result<()> {
+    // print data
+    let batches = df.collect().await?;
+    let data = pretty_format_batches(&batches)?;
+    println!("{data}");
+    Ok(())
 }

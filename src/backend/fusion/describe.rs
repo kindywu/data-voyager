@@ -1,30 +1,19 @@
-#![allow(unused)]
-
 use std::sync::Arc;
 
-use datafusion::{
-    datasource::{provider_as_source, MemTable},
-    error::Result,
-    execution::context::SessionState,
-    functions_aggregate::{
-        approx_percentile_cont::approx_percentile_cont,
-        count::count,
-        expr_fn::{avg, median},
-        stddev::stddev,
-        sum::sum,
-    },
-    prelude::{max, min, DataFrame, SessionContext},
+use anyhow::Result;
+use arrow::array::{ArrayRef, RecordBatch, StringArray};
+use arrow::compute::concat;
+use arrow::datatypes::{DataType, Field, Schema};
+
+use datafusion::functions_aggregate::approx_percentile_cont::approx_percentile_cont;
+use datafusion::functions_aggregate::{
+    average::avg, count::count, median::median, stddev::stddev, sum::sum,
 };
+use datafusion::logical_expr::{case, cast, col, is_null, lit, max, min, try_cast};
+use datafusion::prelude::{DataFrame, SessionContext};
+// use datafusion_expr::{case, cast, col, is_null, lit, max, min, try_cast};
 
-use datafusion_expr::{case, is_null, lit, try_cast};
-
-use datafusion::logical_expr::{col, LogicalPlanBuilder, UNNAMED_TABLE};
-
-use arrow::{
-    array::{ArrayRef, RecordBatch, StringArray},
-    compute::{cast, concat},
-    datatypes::{DataType, Field, Schema},
-};
+use datafusion::{functions::expr_fn::length, functions_array::length::array_length};
 
 pub async fn describe(df: DataFrame) -> Result<DataFrame> {
     let original_schema_fields = df.schema().fields().iter();
@@ -34,7 +23,7 @@ pub async fn describe(df: DataFrame) -> Result<DataFrame> {
     fields.extend(
         original_schema_fields
             .clone()
-            .map(|field| Field::new(field.name(), DataType::Float64, true)),
+            .map(|field| Field::new(field.name(), DataType::Int64, true)),
     );
 
     let schema = Schema::new(fields);
@@ -61,7 +50,7 @@ pub async fn describe(df: DataFrame) -> Result<DataFrame> {
 
         let mut array_data = vec![];
         for column in batch.columns() {
-            array_data.push(cast(column, &DataType::Float64)?);
+            array_data.push(arrow::compute::cast(column, &DataType::Int64)?);
         }
 
         columns.push(concat(
@@ -79,9 +68,52 @@ pub async fn describe(df: DataFrame) -> Result<DataFrame> {
     Ok(df)
 }
 
+pub fn transform(df: DataFrame) -> Result<DataFrame> {
+    let fields = df.schema().fields().iter();
+    // change all temporal columns to Float64
+    let expressions = fields
+        .map(|field| {
+            let dt = field.data_type();
+            let expr = match dt {
+                dt if dt.is_temporal() => cast(col(field.name()), DataType::Int64),
+                dt if dt.is_numeric() => col(field.name()),
+                DataType::List(_) | DataType::LargeList(_) => array_length(col(field.name())),
+                _ => length(cast(col(field.name()), DataType::Utf8)),
+            };
+            expr.alias(field.name())
+        })
+        .collect();
+
+    let df = df.select(expressions)?;
+    Ok(df)
+}
+
+pub fn cast_back(df: DataFrame, original: DataFrame) -> anyhow::Result<DataFrame> {
+    // we need the describe column
+    let describe = Arc::new(Field::new("describe", DataType::Utf8, false));
+    let mut fields = vec![&describe];
+    fields.extend(original.schema().fields().iter());
+    let expressions = fields
+        .into_iter()
+        .map(|field| {
+            let dt = field.data_type();
+            let expr = match dt {
+                dt if dt.is_temporal() => cast(col(field.name()), dt.clone()),
+                DataType::List(_) | DataType::LargeList(_) => {
+                    cast(col(field.name()), DataType::Int32)
+                }
+                _ => col(field.name()),
+            };
+            expr.alias(field.name())
+        })
+        .collect();
+
+    Ok(df.select(expressions)?)
+    // .sort(vec![col("describe").sort(true, false)])?)
+}
+
 fn aggregate_all_in_column(df: DataFrame, field: &Arc<Field>) -> Result<DataFrame> {
     let col_name = field.name();
-    let is_numeric = field.data_type().is_numeric();
 
     let aggr_expr = vec![
         count(col(col_name)).alias(format!("count_{0}", col_name)),
@@ -90,16 +122,16 @@ fn aggregate_all_in_column(df: DataFrame, field: &Arc<Field>) -> Result<DataFram
             .otherwise(lit(0))
             .unwrap())
         .alias(format!("null_count_{0}", col_name)),
-        avg(try_cast(col(col_name), DataType::Float64)).alias(format!("mean_{0}", col_name)),
-        stddev(try_cast(col(col_name), DataType::Float64)).alias(format!("std_{0}", col_name)),
-        min(try_cast(col(col_name), DataType::Float64)).alias(format!("min_{0}", col_name)),
-        max(try_cast(col(col_name), DataType::Float64)).alias(format!("max_{0}", col_name)),
-        median(try_cast(col(col_name), DataType::Float64)).alias(format!("median_{0}", col_name)),
-        approx_percentile_cont(try_cast(col(col_name), DataType::Float64), lit(0.25))
+        avg(try_cast(col(col_name), DataType::Int32)).alias(format!("mean_{0}", col_name)),
+        stddev(try_cast(col(col_name), DataType::Int32)).alias(format!("std_{0}", col_name)),
+        min(try_cast(col(col_name), DataType::Int32)).alias(format!("min_{0}", col_name)),
+        max(try_cast(col(col_name), DataType::Int32)).alias(format!("max_{0}", col_name)),
+        median(try_cast(col(col_name), DataType::Int32)).alias(format!("median_{0}", col_name)),
+        approx_percentile_cont(try_cast(col(col_name), DataType::Int32), lit(0.25))
             .alias(format!("percentile_25_{0}", col_name)),
-        approx_percentile_cont(try_cast(col(col_name), DataType::Float64), lit(0.5))
+        approx_percentile_cont(try_cast(col(col_name), DataType::Int32), lit(0.5))
             .alias(format!("percentile_50_{0}", col_name)),
-        approx_percentile_cont(try_cast(col(col_name), DataType::Float64), lit(0.75))
+        approx_percentile_cont(try_cast(col(col_name), DataType::Int32), lit(0.75))
             .alias(format!("percentile_75_{0}", col_name)),
     ];
 
