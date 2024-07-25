@@ -1,3 +1,5 @@
+mod describe;
+
 use std::ops::Deref;
 
 use arrow::util::pretty::pretty_format_batches;

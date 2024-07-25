@@ -1,9 +1,9 @@
-mod data_fusion;
+mod fusion;
 
 use crate::ConnectOpts;
 use anyhow::Result;
 
-pub use data_fusion::DataFusionBackend;
+pub use fusion::DataFusionBackend;
 
 pub trait Backend {
     type DataFrame: ReplDisplay;

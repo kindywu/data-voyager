@@ -1012,6 +1012,7 @@ dependencies = [
  "clap",
  "crossbeam-channel",
  "datafusion",
+ "datafusion-expr",
  "dirs",
  "duckdb",
  "enum_dispatch",

@@ -11,6 +11,7 @@ arrow = "52.1.0"
 clap = { version = "4.5.9", features = ["derive"] }
 crossbeam-channel = "0.5.13"
 datafusion = "40.0.0"
+datafusion-expr = "40.0.0"
 dirs = "5.0.1"
 duckdb = { version = "1.0.0", features = ["bundled"] }
 enum_dispatch = "0.3.13"
