@@ -1,3 +1,12 @@
+data voyager: A simple and practical data exploration tool based on dataFusion and reedline-repl-rs
+
+![image](https://github.com/user-attachments/assets/6e238f64-d1d9-4598-8759-4c5e83c50221)
+
+![image](https://github.com/user-attachments/assets/014da2c7-5eb4-46b0-b3d6-aaab188e6752)
+
+![image](https://github.com/user-attachments/assets/f055327c-f003-4f4d-a6e2-e0a28c205bb4)
+
+
 # data voyager
 - Arrow
 - DataFusion
